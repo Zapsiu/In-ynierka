@@ -1,24 +1,25 @@
 import React from "react";
-import LoginForm from "./components/LoginForm";
-import RegisterForm from "./components/RegisterForm";
+import { Routes, Route } from "react-router-dom";
+import Header from "./components/Header";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Profile from "./pages/Profil";
+import Team from "./pages/Team"; // 👈 dodana strona drużyn
+import "./AppStyles.css";
 
 function App() {
   return (
-    <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>Panel zawodów robotów</h1>
-
-      <div style={{ display: "flex", gap: "2rem" }}>
-        <div>
-          <h2>Rejestracja</h2>
-          <RegisterForm />
-        </div>
-
-        <div>
-          <h2>Logowanie</h2>
-          <LoginForm />
-        </div>
-      </div>
-    </div>
+    <>
+      <Header />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/logowanie" element={<Login />} />
+        <Route path="/rejestracja" element={<Register />} />
+        <Route path="/profil" element={<Profile />} />
+        <Route path="/druzyna" element={<Team />} /> {/* ✅ nowa trasa */}
+      </Routes>
+    </>
   );
 }
 
