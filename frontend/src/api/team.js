@@ -1,17 +1,15 @@
 import axios from "axios";
+const API = "http://localhost:5000/api/team";
 
-const API = "http://localhost:5000/api/teams";
+export const createTeam = (teamName, username) =>
+  axios.post(`${API}/create`, { teamName, username });
 
-export const createTeam = (name, limit, username) =>
-  axios.post(API, {
-    name,
-    limit,
-    username
-  });
+export const leaveTeam = (username) =>
+  axios.post(`${API}/leave`, { username });
 
+export const getTeams = () => axios.get(`${API}`);
 
-export const joinTeam = (teamId, username) =>
-  axios.put(`${API}/${teamId}/join`, { username });
-
-export const getTeams = () =>
-  axios.get(API);
+export const addMember = ({ teamId, requesterUsername, usernameToAdd }) =>
+  axios.post(`${API}/add-member`, { teamId, requesterUsername, usernameToAdd });
+export const getTeamByUsername = (username) =>
+  axios.get(`${API}/by-user/${encodeURIComponent(username)}`);

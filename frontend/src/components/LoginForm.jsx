@@ -16,7 +16,8 @@ export default function LoginForm() {
       const res = await loginUser(username, password);
       localStorage.setItem("token", res.data.token || "FAKE_TOKEN");
       localStorage.setItem("username", username);
-      navigate("/profil");
+      localStorage.setItem("role", res.data.user.role);
+      navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Błąd logowania.");
     }

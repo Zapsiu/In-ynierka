@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { registerUser } from "../api/auth";
+import { registerUser, loginUser } from "../api/auth";
 import "../AppStyles.css";
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterForm() {
   const [username, setUsername] = useState("");
@@ -8,15 +9,34 @@ export default function RegisterForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [age, setAge] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+
     try {
-      const res = await registerUser(username, password, firstName, lastName, parseInt(age));
+      const res = await registerUser(
+        username,
+        password,
+        firstName,
+        lastName,
+        parseInt(age),
+        email
+      );
       alert(res.data.message);
+
+      const loginRes = await loginUser(username, password);
+      localStorage.setItem("token", loginRes.data.token || "FAKE_TOKEN");
+      localStorage.setItem("username", username);
+      localStorage.setItem("role", loginRes.data.user.role);
+
+      navigate("/");
     } catch (err) {
+      console.error("Błąd rejestracji lub logowania:", err);
       setError(err.response?.data?.message || "Błąd rejestracji.");
     }
   };
@@ -27,53 +47,32 @@ export default function RegisterForm() {
 
       <label>
         Login:
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
+        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
       </label>
 
       <label>
         Hasło:
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </label>
 
       <label>
         Imię:
-        <input
-          type="text"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          required
-        />
+        <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
       </label>
 
       <label>
         Nazwisko:
-        <input
-          type="text"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          required
-        />
+        <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
       </label>
 
       <label>
         Wiek:
-        <input
-          type="number"
-          min="1"
-          value={age}
-          onChange={(e) => setAge(e.target.value)}
-          required
-        />
+        <input type="number" min="1" value={age} onChange={(e) => setAge(e.target.value)} required />
+      </label>
+
+      <label>
+        E-mail:
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </label>
 
       <button type="submit">Zarejestruj</button>
