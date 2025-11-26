@@ -42,11 +42,7 @@ export default function CategoryCard({ cat, canEdit, onSelect, onUploadImage }) 
       <h3 style={{ margin: 0, fontSize: 16 }}>
         <Link to={`/regulamin/${cat._id}`}>{cat.name}</Link>
       </h3>
-      {canEdit && (
-        <button onClick={onSelect} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border,#24264a)", background: "transparent", color: "var(--text,#eef1f3)", cursor: "pointer", width: "fit-content" }}>
-          Edytuj
-        </button>
-      )}
+      {canEdit }
       {error && <small style={{ color: "#ef4444" }}>{error}</small>}
     </div>
   );

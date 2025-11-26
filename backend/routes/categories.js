@@ -4,8 +4,10 @@ const express = require("express");
 const multer = require("multer");
 const mongoose = require("mongoose");
 const Category = require("../models/Category");
+const categoriesCtrl = require("../controllers/categoryController");
 
 const router = express.Router();
+router.put("/:id/name", categoriesCtrl.updateCategoryName);
 
 router.get("/", async (_req, res) => {
   const items = await Category.find().lean();

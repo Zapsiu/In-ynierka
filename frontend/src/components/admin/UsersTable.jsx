@@ -1,34 +1,44 @@
 import React from "react";
 
-const UsersTable = ({ users, onRoleChange }) => {
+const UsersTable = ({ users, onRoleChange, onDeleteUser }) => {
   return (
-    <>
+    <div>
       <h3>Użytkownicy</h3>
       <table>
         <thead>
           <tr>
-            <th>Login</th>
+            <th>Nazwa użytkownika</th>
             <th>Rola</th>
-            <th>Nowa rola</th>
+            <th>Akcje</th>
           </tr>
         </thead>
         <tbody>
           {users.map((u) => (
-            <tr key={u.username}>
+            <tr key={u._id}>
               <td>{u.username}</td>
-              <td>{u.role}</td>
               <td>
-                <select value={u.role} onChange={(e) => onRoleChange(u.username, e.target.value)}>
-                  <option value="user">user</option>
-                  <option value="judge">judge</option>
-                  <option value="admin">admin</option>
+                <select
+                  value={u.role}
+                  onChange={(e) => onRoleChange(u.username, e.target.value)}
+                >
+                  <option value="user">Użytkownik</option>
+                  <option value="judge">Sędzia</option>
+                  <option value="admin">Administrator</option>
                 </select>
+              </td>
+              <td>
+                <button
+                  style={{ marginLeft: "10px", backgroundColor: "darkred", color: "white" }}
+                  onClick={() => onDeleteUser(u.username)}
+                >
+                  Usuń konto
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </>
+    </div>
   );
 };
 

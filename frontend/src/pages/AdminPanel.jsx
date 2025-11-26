@@ -18,6 +18,7 @@ import {
   deleteCategory,
   deleteTeam,
   saveGlobalTeamLimit,
+  deleteUser,
 } from "../api/admin";
 
 const AdminPanel = () => {
@@ -104,6 +105,20 @@ const AdminPanel = () => {
     const updated = teams.map((t) => (t._id === teamId ? { ...t, newLimit: value } : t));
     setTeams(updated);
   };
+  const handleDeleteUser = async (username) => {
+    if (!window.confirm(`Czy na pewno chcesz usunąć użytkownika ${username}?`)) {
+      return;
+    }
+
+    try {
+      const res = await deleteUser(username);
+      setMessage(res.data?.message || "Użytkownik usunięty");
+      loadUsers();
+    } catch (err) {
+      console.error(err);
+      setMessage("Nie udało się usunąć użytkownika");
+    }
+  };
 
   return (
     <div className="profile-container">
@@ -112,7 +127,7 @@ const AdminPanel = () => {
 
       {message && <p style={{ color: "green" }}>{message}</p>}
 
-      <UsersTable users={users} onRoleChange={handleRoleChange} />
+      <UsersTable users={users} onRoleChange={handleRoleChange} onDeleteUser={handleDeleteUser}/>
 
       <GlobalTeamLimit
         value={globalLimit}

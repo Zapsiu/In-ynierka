@@ -98,7 +98,9 @@ exports.addMemberByUsername = async (req, res) => {
   try {
     const { teamId, requesterUsername, usernameToAdd } = req.body;
     if (!teamId || !requesterUsername || !usernameToAdd) {
-      return res.status(400).json({ message: "Brak danych: teamId / requesterUsername / usernameToAdd" });
+      return res
+        .status(400)
+        .json({ message: "Brak danych: teamId / requesterUsername / usernameToAdd" });
     }
     if (requesterUsername === usernameToAdd) {
       return res.status(400).json({ message: "Nie możesz dodać samego siebie" });
@@ -110,40 +112,70 @@ exports.addMemberByUsername = async (req, res) => {
     if (!team) return res.status(404).json({ message: "Nie znaleziono drużyny" });
 
     const isRequesterMember =
-      team.members.some(m => m.username === requesterUsername) ||
+      team.members.some((m) => m.username === requesterUsername) ||
       team.ownerId?.username === requesterUsername;
 
     if (!isRequesterMember) {
-      return res.status(403).json({ message: "Tylko członkowie tej drużyny mogą dodawać osoby" });
+      return res
+        .status(403)
+        .json({ message: "Tylko członkowie tej drużyny mogą dodawać osoby" });
     }
 
-    const userToAdd = await User.findOne({ username: usernameToAdd }).select("_id username team");
-    if (!userToAdd) return res.status(404).json({ message: "Nie znaleziono użytkownika do dodania" });
+    const userToAdd = await User.findOne({ username: usernameToAdd }).select(
+      "_id username team"
+    );
+    if (!userToAdd)
+      return res.status(404).json({ message: "Nie znaleziono użytkownika do dodania" });
 
     if (team.limit && team.members.length >= team.limit) {
-      return res.status(400).json({ message: "Przekroczono limit członków drużyny" });
+      return res
+        .status(400)
+        .json({ message: "Przekroczono limit członków drużyny" });
     }
 
-    if (team.members.some(m => String(m._id) === String(userToAdd._id))) {
+    if (team.members.some((m) => String(m._id) === String(userToAdd._id))) {
       return res.status(400).json({ message: "Użytkownik już jest w tej drużynie" });
     }
 
     if (userToAdd.team && String(userToAdd.team) !== String(team._id)) {
-      return res.status(400).json({ message: "Użytkownik należy do innej drużyny" });
+      return res
+        .status(400)
+        .json({ message: "Użytkownik należy do innej drużyny" });
     }
 
+    // faktyczne dodanie
     team.members.push(userToAdd._id);
     await team.save();
 
     userToAdd.team = team._id;
     await userToAdd.save();
 
-    return res.json({ message: `Dodano ${userToAdd.username} do drużyny ${team.teamName}` });
+    // powiadomienie (tu był błąd: user zamiast userToAdd)
+    try {
+      const { createNotification } = require("../utils/notify");
+      const io = req.app.get("io");
+
+      await createNotification({
+        userId: userToAdd._id,
+        type: "team_member_added",
+        message: `Zostałeś dodany do drużyny ${team.teamName}.`,
+        meta: { teamId: team._id },
+        io,
+      });
+    } catch (notifyErr) {
+      console.error("Błąd wysyłania powiadomienia:", notifyErr);
+      // nie przerywamy dodawania, tylko logujemy
+    }
+
+    return res.json({
+      message: `Dodano ${userToAdd.username} do drużyny ${team.teamName}`,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Błąd dodawania członka" });
   }
 };
+
 
 exports.getTeamByUsername = async (req, res) => {
   try {

@@ -24,3 +24,4 @@ export const deleteTeam = (teamId) => API.delete(`/admin/delete-team/${teamId}`)
 export const saveGlobalTeamLimit = (limit) =>
   API.post("/admin/team-limit", { limit });
 
+export const deleteUser = (username) => API.delete(`/admin/delete-user/${username}`);

@@ -3,6 +3,7 @@ const Team = require("../models/Team");
 const Settings = require("../models/Settings");
 const Robot = require("../models/Robot");
 const Category = require("../models/Category");
+const { createNotification } = require("../utils/notify");
 
 exports.updateUserRole = async (req, res) => {
   const { username, newRole } = req.body;
@@ -90,6 +91,14 @@ exports.removeMemberFromTeam = async (req, res) => {
     await team.save();
 
     await User.updateOne({ _id: user._id }, { $set: { team: null } });
+        const io = req.app.get("io");
+    await createNotification({
+      userId: user._id,
+      type: "team_member_removed",
+      message: `Zostałeś usunięty z drużyny ${team.teamName}.`,
+      meta: { teamId: team._id },
+      io
+    });
 
     res.json({ message: `Usunięto ${username} z drużyny` });
   } catch (err) {
@@ -128,5 +137,29 @@ exports.deleteTeam = async (req, res) => {
   } catch (err) {
     console.error("Błąd usuwania drużyny:", err);
     res.status(500).json({ message: "Błąd usuwania drużyny" });
+  }
+};
+exports.deleteUser = async (req, res) => {
+  const { username } = req.params;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: "Użytkownik nie znaleziony." });
+    }
+
+    if (user.team) {
+      await Team.updateOne(
+        { _id: user.team },
+        { $pull: { members: user._id } }
+      );
+    }
+
+    await User.deleteOne({ _id: user._id });
+
+    res.json({ message: `Użytkownik ${username} został usunięty` });
+  } catch (err) {
+    console.error("Błąd usuwania użytkownika:", err);
+    res.status(500).json({ message: "Błąd serwera przy usuwaniu użytkownika" });
   }
 };

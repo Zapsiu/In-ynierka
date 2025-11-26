@@ -10,7 +10,14 @@ const router = express.Router();
 
 const pdfDir = path.join(__dirname, "..", "uploads", "pdfs");
 fs.mkdirSync(pdfDir, { recursive: true });
-
+function makeAbsolute(req, maybeRelative) {
+  if (!maybeRelative) return "";
+  // jeśli już jest absolutny, zostaw
+  if (/^https?:\/\//i.test(maybeRelative)) return maybeRelative;
+  // zbuduj pełny URL
+  const base = `${req.protocol}://${req.get("host")}`;
+  return `${base}${maybeRelative.startsWith("/") ? "" : "/"}${maybeRelative}`;
+}
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, pdfDir),
   filename: (_req, file, cb) => cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_"))
@@ -25,13 +32,17 @@ router.get("/:categoryId", async (req, res) => {
   if (!cat) return res.status(404).json({ message: "Category not found" });
 
   const reg = await Regulation.findOne({ category: categoryId }).lean();
-  if (!reg) return res.status(404).json({ message: "Regulation not found" });
+  if (!reg) {
+    // Lepiej zwrócić puste dane 200 niż 404 – frontend może normalnie się wyświetlić
+    return res.json({ text: "", pdfUrl: "", pdfFileName: "", updatedAt: null, categoryName: cat.name });
+  }
 
   res.json({
     text: reg.text || "",
-    pdfUrl: reg.pdfUrl || "",
+    pdfUrl: makeAbsolute(req, reg.pdfUrl || ""),     // ⬅⬅ tu
     pdfFileName: reg.pdfFileName || "",
-    updatedAt: reg.updatedAt
+    updatedAt: reg.updatedAt,
+    categoryName: cat.name
   });
 });
 
@@ -64,9 +75,10 @@ router.post("/:categoryId", upload.single("pdf"), async (req, res) => {
 
   res.json({
     text: reg.text || "",
-    pdfUrl: reg.pdfUrl || "",
+    pdfUrl: makeAbsolute(req, reg.pdfUrl || ""),     // ⬅⬅ tu
     pdfFileName: reg.pdfFileName || "",
-    updatedAt: reg.updatedAt
+    updatedAt: reg.updatedAt,
+    categoryName: cat.name
   });
 });
 

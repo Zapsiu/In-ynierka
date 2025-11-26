@@ -35,26 +35,42 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, identifier, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
-    if (!user) return res.status(401).json({ message: "Nieprawidłowe dane logowania" });
+    const loginId = identifier || username;
+    if (!loginId || !password) {
+      return res.status(400).json({ message: "Brak loginu/e-maila lub hasła" });
+    }
+
+    const user = await User.findOne({
+      $or: [{ username: loginId }, { email: loginId }]
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Nieprawidłowe dane logowania" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Nieprawidłowe dane logowania" });
+    if (!isMatch) {
+      return res.status(401).json({ message: "Nieprawidłowe dane logowania" });
+    }
 
-  const token = jwt.sign(
-    { sub: user._id.toString(), role: user.role },   // WAŻNE: sub + role
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
+    const token = jwt.sign(
+      { sub: user._id.toString(), role: user.role },
+      process.env.JWT_SECRET || JWT_SECRET,   
+      { expiresIn: "7d" }
+    );
 
     return res.json({
       message: "Zalogowano",
       token,
-      user: { id: user._id, username: user.username, role: user.role, team: user.team }
+      user: {
+        id: user._id,
+        username: user.username,
+        role: user.role,
+        team: user.team
+      }
     });
   } catch (err) {
     console.error("LOGIN ERROR:", err);

@@ -29,6 +29,7 @@ const Team = () => {
 
   const [myTeam, setMyTeam] = useState(null);
   const [memberNick, setMemberNick] = useState("");
+  const [creationLocked, setCreationLocked] = useState(false);
 
   const safeErr = (e) => {
     const msg = e?.response?.data?.message || e?.message || String(e);
@@ -40,28 +41,25 @@ const Team = () => {
     const res = await getRobotsByUsername(username);
     setRobots(res.data || []);
   };
-
   const loadCategories = async () => {
     const list = await fetchCategories();
     setCategories(list || []);
   };
-
   const loadGlobalLimit = async () => {
     try {
       const res = await getGlobalTeamLimit();
-      setGlobalLimit(res.data?.limit ?? null);
-    } catch {  }
+      const limit = res.data?.limit ?? null;
+      setGlobalLimit(limit);
+      const locked = res.data?.lockTeams || limit === 0;
+      setCreationLocked(Boolean(locked));
+    } catch { setCreationLocked(false); }
   };
-
   const loadMyTeam = async (username) => {
     try {
       const res = await getTeamByUsername(username);
       setMyTeam(res.data || null);
-    } catch {
-      setMyTeam(null);
-    }
+    } catch { setMyTeam(null); }
   };
-
   const loadTeams = async () => {
     const list = await getTeams();
     setTeams(list.data || []);
@@ -73,7 +71,8 @@ const Team = () => {
         const username = localStorage.getItem("username");
         const token = localStorage.getItem("token");
         if (!username || !token) throw new Error("Brak zalogowanego użytkownika");
-        const profile = await getProfile(username); // GET /auth/profil z x-username w Twoim auth.js
+
+        const profile = await getProfile(username);
         const u = profile.data;
         setCurrentUser(u?.username || null);
         const hasTeam = !!u?.team;
@@ -81,7 +80,6 @@ const Team = () => {
 
         await loadTeams();
         await loadGlobalLimit();
-
         if (hasTeam) {
           await loadMyTeam(u.username);
           await loadRobots(u.username);
@@ -91,12 +89,13 @@ const Team = () => {
     })();
   }, []);
 
-  const isOwner = myTeam?.ownerId?.username === currentUser;
+const isOwner = true;
 
   const handleCreate = async (e) => {
     e.preventDefault();
     setError(""); setMessage("");
     if (!currentUser) return setError("Nie jesteś zalogowany.");
+    if (creationLocked) return setError("Tworzenie drużyn jest obecnie zablokowane przez organizatora.");
     try {
       const res = await createTeam(teamName, currentUser);
       setMessage(res.data?.message || "Drużyna utworzona");
@@ -115,7 +114,8 @@ const Team = () => {
     try {
       const res = await createRobot({ username: currentUser, robotName, categoryId: selectedCategory });
       setMessage(res.data?.message || "Dodano robota");
-      setRobotName(""); setSelectedCategory("");
+      setRobotName("");
+      setSelectedCategory("");
       await loadRobots(currentUser);
     } catch (err) { safeErr(err); }
   };
@@ -140,49 +140,103 @@ const Team = () => {
   };
 
   return (
-    <div className="profile-container">
-    <div className="card">
-      <h2>Zarządzanie drużyną</h2>
-    
+    <div className="team-wrap">
+      {/* Nagłówek */}
+      <div className="card">
+        <div className="card-body team-head">
+          <h2 className="team-title">Zarządzanie drużyną</h2>
+          {globalLimit !== null && (
+            <div className="helper">Globalny limit członków: <strong>{globalLimit}</strong></div>
+          )}
+        </div>
+      </div>
 
-      {!userHasTeam && (
-        <TeamCreateForm
-          teamName={teamName}
-          setTeamName={setTeamName}
-          globalLimit={globalLimit}
-          onSubmit={handleCreate}
-        />
-      )}
-    
-      {userHasTeam && (
-        <>
-          <AddMemberForm
-            visible={isOwner}
-            memberNick={memberNick}
-            setMemberNick={setMemberNick}
-            onSubmit={handleAddMember}
-          />
+      {/* Komunikaty */}
+      {message && <div className="notice success">{message}</div>}
+      {error && <div className="notice error">{error}</div>}
 
-          <MyTeamSummary team={myTeam} />
+      {/* Główna siatka */}
+      <div className="team-grid">
+        {/* LEWA kolumna – podsumowanie/roboty lub publiczne drużyny */}
+        <div className="card">
+          <div className="card-body">
+            {userHasTeam ? (
+              <>
+                <div className="section">
+                  <MyTeamSummary team={myTeam} />
+                </div>
 
-          <RobotCreateForm
-            onSubmit={handleCreateRobot}
-            robotName={robotName}
-            setRobotName={setRobotName}
-            categories={categories}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-          />
+                <div className="hr" />
 
-          <RobotsList robots={robots} />
-        </>
-      )}
+                <div className="section">
+                  <RobotsList robots={robots} />
+                </div>
+              </>
+            ) : (
+              <>
+                <h3>Dostępne drużyny</h3>
+                <TeamsPublicList teams={teams} />
+                {!teams?.length && <p className="helper">Brak dostępnych drużyn.</p>}
+              </>
+            )}
+          </div>
+        </div>
 
-      {message && <p style={{ color: "lightgreen" }}>{message}</p>}
-      {error && <p className="error">{error}</p>}
+        {/* PRAWA kolumna – tworzenie/dodawanie/roboty */}
+        <div className="card">
+          <div className="card-body">
+            {!userHasTeam && !creationLocked && (
+              <div className="section">
+                <h3>Utwórz drużynę</h3>
+                <TeamCreateForm
+                  teamName={teamName}
+                  setTeamName={setTeamName}
+                  globalLimit={globalLimit}
+                  onSubmit={handleCreate}
+                />
+              </div>
+            )}
 
-      <TeamsPublicList teams={teams} />
-    </div>
+            {!userHasTeam && creationLocked && (
+              <p className="notice error">Tworzenie drużyn zostało zablokowane przez organizatora.</p>
+            )}
+
+            {userHasTeam && (
+              <>
+                <div className="section">
+                  <h3>Dodaj członka</h3>
+                  <p className="helper" style={{ marginTop: -4, marginBottom: 8 }}>
+                    Wpisz <strong>username</strong> osoby, którą chcesz dodać do swojej drużyny.
+                  </p>
+                  <AddMemberForm
+                    visible={isOwner }
+                    memberNick={memberNick}
+                    setMemberNick={setMemberNick}
+                    onSubmit={handleAddMember}
+                  />
+                  {!isOwner && (
+                    <p className="helper">Dodawać nowych członków może tylko właściciel drużyny.</p>
+                  )}
+                </div>
+
+                <div className="hr" />
+
+                <div className="section">
+                  <h3>Dodaj robota</h3>
+                  <RobotCreateForm
+                    onSubmit={handleCreateRobot}
+                    robotName={robotName}
+                    setRobotName={setRobotName}
+                    categories={categories}
+                    selectedCategory={selectedCategory}
+                    setSelectedCategory={setSelectedCategory}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

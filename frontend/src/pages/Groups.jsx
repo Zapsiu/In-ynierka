@@ -1,94 +1,94 @@
 import { useEffect, useState } from "react";
 import "../AppStyles.css";
-import { fetchGroups, generateGroups, resetGroups, addScore } from "../api/groups";
-import JudgePanel from "../components/groups/JudgeCategoriesPanel";
+import { fetchCategories } from "../api/categories";
+import { fetchGroups } from "../api/groups";
 import GroupCard from "../components/groups/GroupCard";
 
+function msgFrom(e) {
+  return e?.response?.data?.message || e?.message || String(e);
+}
+
 export default function Groups() {
+  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState("");
   const [groups, setGroups] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [size, setSize] = useState(4);
-  const [msg, setMsg] = useState(null);
   const [err, setErr] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const username = localStorage.getItem("username") || "";
-  const role = localStorage.getItem("role") || "user";
-  const canJudge = role === "judge" || role === "admin";
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await fetchCategories();
+        setCategories(Array.isArray(list) ? list : []);
+        if (list && list.length) {
+          setCategoryId(list[0]._id);
+        }
+      } catch (e) {
+        setErr(msgFrom(e));
+      }
+    })();
+  }, []);
 
-  async function load() {
+  useEffect(() => {
+    if (!categoryId) {
+      setGroups([]);
+      return;
+    }
+    loadGroups(categoryId);
+  }, [categoryId]);
+
+  async function loadGroups(catId) {
+    setLoading(true);
     setErr(null);
     try {
-      const { data } = await fetchGroups();
-      setGroups(Array.isArray(data.groups) ? data.groups : []);
+      const res = await fetchGroups(catId);
+      const list = res.groups || res.data?.groups || [];
+      setGroups(list);
     } catch (e) {
-      setErr(e?.response?.data?.message || e.message || "Błąd ładowania grup");
+      setErr(msgFrom(e));
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, []);
-
-  async function onGenerate() {
-    setErr(null); setMsg(null);
-    try {
-      await generateGroups(username, { size: Number(size) || 4 });
-      setMsg("Wygenerowano grupy");
-      await load();
-    } catch (e) {
-      setErr(e?.response?.data?.message || e.message || "Błąd generowania");
-    }
-  }
-
-  async function onReset() {
-    if (!confirm("Na pewno zresetować wszystkie grupy?")) return;
-    setErr(null); setMsg(null);
-    try {
-      await resetGroups(username);
-      setMsg("Zresetowano grupy");
-      await load();
-    } catch (e) {
-      setErr(e?.response?.data?.message || e.message || "Błąd resetu");
-    }
-  }
-
-  async function onScore(gid, rid, result) {
-    setErr(null);
-    try {
-      await addScore(username, gid, rid, result);
-      await load();
-    } catch (e) {
-      setErr(e?.response?.data?.message || e.message || "Błąd zapisu punktów");
-    }
-  }
-
-  if (loading) return <div className="profile-container">Ładowanie…</div>;
-
   return (
-    <div className="profile-container" style={{ maxWidth: 1000 }}>
+    <div className="profile-container">
       <h2>Grupy</h2>
 
-      {msg && <div className="notice success">{msg}</div>}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <label>
+          Kategoria:
+          <select
+            value={categoryId || ""}
+            onChange={(e) => setCategoryId(e.target.value)}
+            style={{ marginLeft: 8 }}
+          >
+            {(categories || []).map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       {err && <div className="notice error">{err}</div>}
+      {loading && <p>Ładowanie…</p>}
 
-      <JudgePanel
-        canJudge={canJudge}
-        size={size}
-        setSize={setSize}
-        onGenerate={onGenerate}
-        onReset={onReset}
-        onRefresh={load}
-      />
-
-      {groups.length === 0 ? (
-        <div className="card">Brak grup.</div>
-      ) : (
-        <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
-          {groups.map((g) => (
-            <GroupCard key={g._id} group={g} canJudge={canJudge} onScore={onScore} />
-          ))}
-        </div>
+      {!loading && groups.length === 0 && !err && (
+        <div className="card">Brak grup dla tej kategorii.</div>
       )}
+
+      <div className="grid" style={{ gap: 16 }}>
+        {groups.map((g) => (
+          <GroupCard
+            key={g._id}
+            group={g}
+            canJudge={false}   // wymusza tryb tylko-do-odczytu w GroupCard
+            onScore={() => {}} // przekazujemy pustą funkcję, żeby nic nie robiło
+          />
+        ))}
+      </div>
     </div>
   );
 }

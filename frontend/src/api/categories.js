@@ -6,12 +6,14 @@ export const fetchCategories = async () => {
   const { data } = await axios.get(API_URL);
   return data;
 };
-
 export const createCategory = async (payload) => {
   const { data } = await axios.post(`${API_URL}/create`, payload);
   return data;
 };
-
+export const updateCategoryName = async (categoryId, newName) => {
+  const { data } = await axios.put(`${API_URL}/${categoryId}/name`, { name: newName });
+  return data; 
+};
 export const uploadCategoryImage = async (categoryId, file) => {
   const fd = new FormData();
   fd.append("image", file);
@@ -20,6 +22,8 @@ export const uploadCategoryImage = async (categoryId, file) => {
   const headers = { "Content-Type": "multipart/form-data" };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const { data } = await axios.post(`${API_URL}/${categoryId}/image`, fd, { headers });
+  const { data } = await axios.post(`${API_URL}/${categoryId}/image`, fd, {
+    headers
+  });
   return data;
 };

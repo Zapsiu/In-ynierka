@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../../AppStyles.css";
 import ChatModal from "../chat/ChatModal";
+import NotificationsBell from "../notification/NotificationsBell";
+import SchedulePanel from "../../pages/SchedulePanel";
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -30,12 +32,14 @@ const Header = () => {
           <Link to="/" className="logo-link">EastRobo</Link>
         </div>
         <nav className="nav">
+          <Link to="/schedule" className="nav-button">Harmonogram</Link>
           <Link to="/regulamin" className="nav-button">Regulamin</Link>
           <Link to="/grupy" className="nav-button">Grupy</Link>
           <Link to="/playoff" className="nav-button">Play-off</Link>
 
           {isLoggedIn ? (
             <>
+              
               {role === "judge" && <Link to="/sedzia" className="nav-button">Sędzia</Link>}
               {role === "admin" && (
                 <>
@@ -46,6 +50,7 @@ const Header = () => {
               <ChatModal role={role || 'user'} initialStaffUsernames={[]} />
               <Link to="/profil" className="nav-button">Profil</Link>
               <Link to="/druzyna" className="nav-button">Drużyna</Link>
+              <NotificationsBell />
               <button onClick={handleLogout} className="nav-button">Wyloguj</button>
             </>
           ) : (

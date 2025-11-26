@@ -1,4 +1,3 @@
-// src/pages/Regulation.jsx
 import { useEffect, useMemo, useState } from "react";
 import { fetchCategories, uploadCategoryImage } from "../api/categories";
 import EditorSection from "../components/regulation/EditorSection";
@@ -42,11 +41,6 @@ export default function Regulation() {
         onSelect={setSelectedId}
         onUploadImage={handleImageUpload}
       />
-      {canEdit && selectedId && (
-        <section style={{ marginTop: 24 }}>
-          <EditorSection categories={cats} selectedId={selectedId} />
-        </section>
-      )}
     </main>
   );
 }

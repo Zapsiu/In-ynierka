@@ -20,6 +20,8 @@ router.post("/team-limit", adminController.setDefaultTeamLimit);
 router.post("/remove-member", adminController.removeMemberFromTeam);
 router.post("/update-team-limit", adminController.updateTeamLimit);
 router.delete("/delete-robot/:robotId", adminController.deleteRobot);
+router.delete("/delete-user/:username", adminController.deleteUser);
+
 router.get("/robots", async (req, res) => {
   const Robot = require("../models/Robot");
   try {
