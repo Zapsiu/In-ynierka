@@ -673,7 +673,6 @@ main {
   padding-bottom: calc(var(--footer-h, 72px) + 36px);
 }
 
-/* ===== Profile ===== */
 .profile-wrap { max-width: 860px; margin: 0 auto; padding: 16px; }
 .profile-head {
   display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;

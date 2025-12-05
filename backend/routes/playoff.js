@@ -5,7 +5,7 @@ const {
   generatePlayoff,
   updateMatch,
   getCurrentPlayoff
-} = require("../controllers/PlayoffController");
+} = require("../controllers/playoffController");
 
 async function requireJudge(req, res, next) {
   try {

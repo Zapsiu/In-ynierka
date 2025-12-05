@@ -1,4 +1,3 @@
-// src/pages/SchedulePanel.jsx
 import { useEffect, useState } from "react";
 import "../AppStyles.css";
 import { fetchCategories } from "../api/categories";
@@ -141,7 +140,6 @@ export default function SchedulePanel() {
       <h2>Harmonogram zawodów</h2>
 
       <div className="card" style={{ marginBottom: 20 }}>
-        {/* Górny pasek z kategorią – podobnie jak w Play-off */}
         <div className="schedule-top">
           <span className="schedule-top-label">Kategoria:</span>
           <select

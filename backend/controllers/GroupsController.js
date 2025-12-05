@@ -193,7 +193,6 @@ exports.updateScore = async (req, res) => {
     const mode = delta === "dec" ? "dec" : "inc";
 
     if (mode === "inc") {
-      // DODAWANIE – tak jak miałeś: wygrana = 3 pkt, remis = 1 pkt
       if (result === "win") {
         row.points += 3;
         row.wins += 1;
@@ -205,7 +204,6 @@ exports.updateScore = async (req, res) => {
       }
       row.played += 1;
     } else {
-      // ODEJMOWANIE – cofamy pojedynczy wynik, ale nie schodzimy poniżej zera
       if (result === "win" && row.wins > 0) {
         row.wins -= 1;
         row.points = Math.max(0, row.points - 3);

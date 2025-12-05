@@ -33,7 +33,6 @@ router.get("/:categoryId", async (req, res) => {
 
   const reg = await Regulation.findOne({ category: categoryId }).lean();
   if (!reg) {
-    // Lepiej zwrócić puste dane 200 niż 404 – frontend może normalnie się wyświetlić
     return res.json({ text: "", pdfUrl: "", pdfFileName: "", updatedAt: null, categoryName: cat.name });
   }
 

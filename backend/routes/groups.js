@@ -6,7 +6,7 @@ const {
   generateGroups,
   updateScore,
   resetGroups
-} = require("../controllers/GroupsController");
+} = require("../controllers/groupsController");
 
 async function requireJudge(req, res, next) {
   try {

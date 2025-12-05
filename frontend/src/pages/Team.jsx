@@ -141,7 +141,6 @@ const isOwner = true;
 
   return (
     <div className="team-wrap">
-      {/* Nagłówek */}
       <div className="card">
         <div className="card-body team-head">
           <h2 className="team-title">Zarządzanie drużyną</h2>
@@ -151,13 +150,10 @@ const isOwner = true;
         </div>
       </div>
 
-      {/* Komunikaty */}
       {message && <div className="notice success">{message}</div>}
       {error && <div className="notice error">{error}</div>}
 
-      {/* Główna siatka */}
       <div className="team-grid">
-        {/* LEWA kolumna – podsumowanie/roboty lub publiczne drużyny */}
         <div className="card">
           <div className="card-body">
             {userHasTeam ? (
@@ -182,7 +178,6 @@ const isOwner = true;
           </div>
         </div>
 
-        {/* PRAWA kolumna – tworzenie/dodawanie/roboty */}
         <div className="card">
           <div className="card-body">
             {!userHasTeam && !creationLocked && (
